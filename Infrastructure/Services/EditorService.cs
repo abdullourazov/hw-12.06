@@ -1,7 +1,7 @@
 using System.Net;
 using AutoMapper;
 using Domain.ApiResponse;
-using Domain.DTOs.PublisherDTOs;
+using Domain.DTOs.EditorDTOs;
 using Domain.Entities;
 using Domain.Filter;
 using Infrastructure.Data;
@@ -10,27 +10,30 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Services;
 
-public class PublisherService(DataContext context, IMapper mapper) : IPublisherService
+public class EditorService(DataContext context, IMapper mapper) : IEditorService
 {
-    public async Task<Response<string>> CreatePublishAsync(CreatePublisherDTO createPublisherDTO)
+    public async Task<Response<string>> CreateEditorAsync(CreateEditorDTO createEditorDTO)
     {
-        var mapped = mapper.Map<Publisher>(createPublisherDTO);
-        var result = await context.Publishers.AddAsync(mapped);
+        var mapped = mapper.Map<Editor>(createEditorDTO);
+        var result = await context.Editors.AddAsync(mapped);
         await context.SaveChangesAsync();
         return result == null
         ? new Response<string>("Something went wrong", HttpStatusCode.InternalServerError)
         : new Response<string>(null, "Done succesfully");
     }
 
-    public async Task<Response<string>> DeletePublishAsync(int id)
+
+
+
+    public async Task<Response<string>> DeleteEditorAsync(int id)
     {
-        var publisher = await context.Publishers.FindAsync(id);
-        if (publisher == null)
+        var Editor = await context.Editors.FindAsync(id);
+        if (Editor == null)
         {
-            return new Response<string>("Publisher not found", HttpStatusCode.NotFound);
+            return new Response<string>("Editor not found", HttpStatusCode.NotFound);
         }
 
-        context.Publishers.Remove(publisher);
+        context.Editors.Remove(Editor);
         var result = await context.SaveChangesAsync();
         return result == null
         ? new Response<string>("Someting went wrong", HttpStatusCode.InternalServerError)
@@ -38,14 +41,16 @@ public class PublisherService(DataContext context, IMapper mapper) : IPublisherS
     }
 
 
-    public async Task<PagedResponse<List<GetPublisherDTO>>> GetPublisherAsync(PublisherFilter filter)
+
+
+    public async Task<PagedResponse<List<GetEditorDTO>>> GetEditorAsync(EditorFilter filter)
     {
         var validFilter = new ValidFilter(filter.PageNumber, filter.PageSize);
-        var query = context.Publishers.AsQueryable();
+        var query = context.Editors.AsQueryable();
 
         if (!string.IsNullOrEmpty(filter.Title))
         {
-            query = query.Where(p => p.Name.ToLower().Trim().Contains(filter.Title.ToLower().Trim()));
+            query = query.Where(p => p.FirstName.ToLower().Trim().Contains(filter.Title.ToLower().Trim()));
         }
 
         var totalRecords = await query.CountAsync();
@@ -56,25 +61,30 @@ public class PublisherService(DataContext context, IMapper mapper) : IPublisherS
         .Take(validFilter.PageSize)
         .ToListAsync();
 
-        var mapped = mapper.Map<List<GetPublisherDTO>>(paged);
+        var mapped = mapper.Map<List<GetEditorDTO>>(paged);
 
-        return new PagedResponse<List<GetPublisherDTO>>(mapped, totalRecords, validFilter.PageNumber, validFilter.PageSize);
+        return new PagedResponse<List<GetEditorDTO>>(mapped, totalRecords, validFilter.PageNumber, validFilter.PageSize);
     }
 
-    public async Task<Response<string>> UpdatePublishAsync(int id, UpdatePublisherDTO updatePublisherDTO)
+    public Task<Response<string>> UpdateEditorAsync(int id, UpdateEditorDTO updateEditorDTO)
     {
-        var foundPublisher = await context.Publishers.FindAsync(id);
-        if (foundPublisher == null)
+        throw new NotImplementedException();
+    }
+
+
+    public async Task<Response<string>> UpdatePublishAsync(int id, UpdateEditorDTO updateEditorDTO)
+    {
+        var foundEditor = await context.Editors.FindAsync(id);
+        if (foundEditor == null)
         {
             return new Response<string>("Book not found", HttpStatusCode.NotFound);
         }
 
-        var mapped = mapper.Map<Book>(updatePublisherDTO);
+        var mapped = mapper.Map<Book>(updateEditorDTO);
         var result = await context.SaveChangesAsync();
 
         return result == null
         ? new Response<string>("Someting went wrong", HttpStatusCode.InternalServerError)
         : new Response<string>(null, "Done succesfully");
     }
-
 }
